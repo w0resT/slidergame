@@ -1,4 +1,5 @@
 #include "helpers.h"
+#include "../resource.h"
 #include "../wndproc.h"
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -12,6 +13,7 @@ ATOM helpers::register_window(HINSTANCE hInstance, LPCTSTR lpzClassName)
 	window_class.lpszClassName = lpzClassName;
 	window_class.hCursor = LoadCursor(NULL, IDC_ARROW);
 	window_class.hbrBackground = (HBRUSH)COLOR_APPWORKSPACE;
+	window_class.hIcon = (HICON)LoadImage(hInstance, MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 32, 32, 0);
 
 	return RegisterClass(&window_class);
 }

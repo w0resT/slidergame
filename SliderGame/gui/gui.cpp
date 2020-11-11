@@ -85,6 +85,7 @@ void gui::main_window()
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
+	// Bar menu
 	if (ImGui::BeginMainMenuBar())
 	{
 		if (ImGui::BeginMenu("Game"))
@@ -114,11 +115,26 @@ void gui::main_window()
 	ImGui::SetNextWindowPos(ImVec2(0, 19));
 	ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH - 16, WINDOW_HEIGHT - 58));
 
-	ImGui::Begin("Slider game", NULL, window_flags);
+	ImGui::Begin("#Main", NULL, window_flags);
 	{
-		ImGui::Text("Testing...");
-		if (ImGui::Button("Exit"))
+		float x = ImGui::GetWindowWidth() / 2 - 90.f;
+		float y = ImGui::GetWindowHeight() / 2 - 50.f;
+
+		ImGui::SetCursorPos(ImVec2(x, y));
+		if (ImGui::Button("New game", ImVec2(180, 40)))
+		{
+			// New game
+		}
+
+		ImGui::SetCursorPosX(x);
+		if (ImGui::Button("Exit", ImVec2(180, 40)))
+		{
 			globals::exit = true;
+		}
+
+		//ImGui::Text("Testing...");
+		//if (ImGui::Button("Exit"))
+		//	globals::exit = true;
 
 		//if(ImGui::Button("Style settings"))
 			//ImGui::ShowStyleEditor();
