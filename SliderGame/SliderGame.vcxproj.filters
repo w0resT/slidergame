@@ -66,6 +66,9 @@
     <ClCompile Include="helpers\helpers.cpp">
       <Filter>Исходные файлы\helpers</Filter>
     </ClCompile>
+    <ClCompile Include="core\core.cpp">
+      <Filter>Исходные файлы\core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="globals.h">
@@ -106,6 +109,9 @@
     </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="core\core.h">
+      <Filter>Файлы заголовков\core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

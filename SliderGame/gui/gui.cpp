@@ -1,8 +1,13 @@
 #include "gui.h"
 #include "../helpers/helpers.h"
+#include "../core/core.h"
 
-LPCTSTR gui::lpz_class = nullptr;
-HWND gui::hwnd = nullptr;
+namespace gui
+{
+	LPCTSTR lpz_class = nullptr;
+	HWND hwnd = nullptr;
+	bool show_new_game_window = false;
+}
 
 bool gui::setup_window(HINSTANCE m_hInstance)
 {
@@ -90,7 +95,8 @@ void gui::main_window()
 	{
 		if (ImGui::BeginMenu("Game"))
 		{
-			if (ImGui::MenuItem("New game")) { }
+			if (ImGui::MenuItem("New game")) { show_new_game_window = true; }
+			if (show_new_game_window) if (ImGui::MenuItem("Back to menu")) { show_new_game_window = false; core::reset_data(); }
 			if (ImGui::MenuItem("Exit")) { globals::exit = true; }
 			ImGui::EndMenu();
 		}
@@ -123,7 +129,7 @@ void gui::main_window()
 		ImGui::SetCursorPos(ImVec2(x, y));
 		if (ImGui::Button("New game", ImVec2(180, 40)))
 		{
-			// New game
+			show_new_game_window = true;
 		}
 
 		ImGui::SetCursorPosX(x);
@@ -132,14 +138,13 @@ void gui::main_window()
 			globals::exit = true;
 		}
 
-		//ImGui::Text("Testing...");
-		//if (ImGui::Button("Exit"))
-		//	globals::exit = true;
-
 		//if(ImGui::Button("Style settings"))
 			//ImGui::ShowStyleEditor();
 	}
 	ImGui::End();
+
+	if (show_new_game_window)
+		game_window();
 
 	// Rendering
 	ImGui::EndFrame();
@@ -162,6 +167,141 @@ void gui::main_window()
 	// Handle loss of D3D9 device
 	if (result == D3DERR_DEVICELOST && globals::d3d_device->TestCooperativeLevel() == D3DERR_DEVICENOTRESET)
 		helpers::reset_device();
+}
+
+void gui::game_window()
+{
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar;
+
+	ImGui::SetNextWindowPos(ImVec2(0, 19));
+	ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH - 16, WINDOW_HEIGHT - 58));
+
+	ImGui::Begin("#Game", NULL, window_flags);
+	{
+		//static bool map_dot[25];
+		//static ImVec2 dot_pos[25];
+		/*static bool once = false;
+
+		if (!once)
+		{
+			for (int i = 0; i < 25; ++i)
+			{
+				map_dot[i] = false;
+				dot_pos[i] = ImVec2(0, 0);
+			}
+			once = true;
+		}*/
+
+		static bool once = false;
+		if (!once)
+		{
+			core::reset_data();
+			once = true;
+		}
+		
+		ImGui::Columns(1);
+		ImGui::BeginChild("#ChildGame", ImVec2(236, 0), true);
+		{
+			ImDrawList* draw_list = ImGui::GetWindowDrawList();	
+
+			ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.00f, 0.00f, 0.00f, 0.52f));
+			ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.00f, 0.00f, 0.00f, 0.52f));
+			ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.00f, 0.00f, 0.00f, 0.72f));
+			for (int n = 0; n < 25; ++n)
+			{
+				ImGui::PushID(n);
+				if ((n % 5) != 0)
+					ImGui::SameLine(0.f, 30);
+
+				if (n == 5)
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 29.f);
+
+				if (n == 10)
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 29.f);
+
+				if (n == 15)
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 29.f);
+
+				if (n == 20)
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 29.f);
+
+				if (n == 25)
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 29.f);
+
+				core::map_dot_pos[n] = ImGui::GetCursorPos();
+				core::map_dot_pos[n].x += 18.0f;
+				core::map_dot_pos[n].y += 31.f;
+
+				ImGui::RadioButton("", core::map_dot[n]);
+
+				if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+				{
+					ImGui::SetDragDropPayload("DND_GAME_CELL", &n, sizeof(int));
+					ImGui::Text("%d", n);
+					ImGui::EndDragDropSource();
+				}
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_GAME_CELL"))
+					{
+						IM_ASSERT(payload->DataSize == sizeof(int));
+						int payload_n = *(const int*)payload->Data;
+						core::map_dot[n] = true;
+						core::map_dot[payload_n] = true;
+
+						std::pair<ImVec2, ImVec2> temp;
+						temp.first = core::map_dot_pos[payload_n];
+						temp.second = core::map_dot_pos[n];
+						core::made_moves.push_back(temp);
+
+						std::pair<int, int> temp_2;
+						temp_2.first = n;
+						temp_2.second = payload_n;
+						core::made_moves_idx.push_back(temp_2);
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				ImGui::PopID();
+			}
+			ImGui::PopStyleColor();
+			ImGui::PopStyleColor();
+			ImGui::PopStyleColor();
+
+			// Drawing lines
+			for (auto foo : core::made_moves)
+				draw_list->AddLine(foo.first, foo.second, ImColor(25, 25, 25), 2.f);
+		}
+		ImGui::EndChild();
+
+		ImGui::SameLine();
+		ImGui::NextColumn();
+		ImGui::BeginChild("#ChildGame2", ImVec2(0, 0), true);
+		{
+			ImGui::Text("Information");
+			ImGui::Separator();
+
+			/*ImGui::Text("1: %d | %f:%f", int(map_dot[0]), dot_pos[0].x, dot_pos[0].y);
+			ImGui::Text("2: %d | %f:%f", int(map_dot[1]), dot_pos[1].x, dot_pos[1].y);
+			ImGui::Text("3: %d | %f:%f", int(map_dot[2]), dot_pos[2].x, dot_pos[2].y);
+			ImGui::Text("4: %d | %f:%f", int(map_dot[3]), dot_pos[3].x, dot_pos[3].y);
+			ImGui::Text("5: %d | %f:%f", int(map_dot[4]), dot_pos[4].x, dot_pos[4].y);*/
+
+			ImGui::Separator();
+			ImGui::Text("Game");
+			ImGui::Separator();
+			if (ImGui::Button("Reset")) { core::reset_data(); }
+			if (ImGui::Button("Back to menu")) { show_new_game_window = false; core::reset_data(); }
+
+		}
+		ImGui::EndChild();
+		
+	}
+	ImGui::End();
+}
+
+void gui::message_window()
+{
 }
 
 void gui::load_style()

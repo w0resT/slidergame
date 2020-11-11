@@ -122,6 +122,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="core\core.cpp" />
     <ClCompile Include="globals.cpp" />
     <ClCompile Include="gui\gui.cpp" />
     <ClCompile Include="helpers\helpers.cpp" />
@@ -133,6 +134,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="core\core.h" />
     <ClInclude Include="globals.h" />
     <ClInclude Include="gui\gui.h" />
     <ClInclude Include="helpers\helpers.h" />

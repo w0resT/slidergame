@@ -1,6 +1,8 @@
 #pragma once
 
 #include <d3d9.h>
+#include <utility> // std::pair
+#include <vector>
 
 // imgui
 #include "imgui/imgui.h"
