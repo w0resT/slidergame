@@ -3,6 +3,7 @@
 #include <d3d9.h>
 #include <utility> // std::pair
 #include <vector>
+#include <string>
 
 // imgui
 #include "imgui/imgui.h"
