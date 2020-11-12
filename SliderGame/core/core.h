@@ -8,6 +8,7 @@ namespace core
 	extern bool check_state(int idx1, int idx2);
 
 	extern int evaluation(int curr_idx, int level = 0, int ht = 0);
+	extern int evaluation_recursion(int curr_idx, int level, int prev_idx);
 
 	extern std::vector<std::pair<ImVec2, ImVec2>> made_moves;
 	extern std::vector<std::pair<int, int>> made_moves_idx;

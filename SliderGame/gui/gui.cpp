@@ -2,12 +2,18 @@
 #include "../helpers/helpers.h"
 #include "../core/core.h"
 
+#include <windows.h>
+#pragma comment(lib, "winmm.lib")
+
 namespace gui
 {
 	LPCTSTR lpz_class = nullptr;
 	HWND hwnd = nullptr;
 	bool show_new_game_window = false;
 	bool show_message_window = false;
+	bool show_info_window = false;
+	bool show_setting_window = false;
+	float color_first_pl[4] = { 0.f, 0.f, 0.f, 1.f };
 }
 
 bool gui::setup_window(HINSTANCE m_hInstance)
@@ -82,6 +88,8 @@ void gui::main()
 	}
 }
 
+static bool onc = false;
+
 void gui::main_window()
 {
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -90,6 +98,11 @@ void gui::main_window()
 	ImGui_ImplDX9_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
+
+	//mciSendString("stop C:\\Users\\w0resT\\Desktop\\2.mp3", NULL, 0, NULL);
+	//mciSendString("close C:\\Users\\w0resT\\Desktop\\2.mp3", NULL, 0, NULL);
+
+	mciSendString("play C:\\Users\\w0resT\\Desktop\\1.mp3 repeat", NULL, 0, NULL);
 
 	// Bar menu
 	if (ImGui::BeginMainMenuBar())
@@ -104,30 +117,13 @@ void gui::main_window()
 
 		if (ImGui::BeginMenu("Settings"))
 		{
-			if (show_new_game_window)
-			{
-				show_message_window = true;
-				message_window(msg_type::ERROR_MSG);
-			}
-			else
-			{
-				if (ImGui::MenuItem("Style settings")) {}
-			}
+			if (ImGui::MenuItem("Style settings")) { show_setting_window = true; show_info_window = false; }
 			ImGui::EndMenu();
 		}
 
 		if (ImGui::BeginMenu("Info"))
 		{
-			if (show_new_game_window)
-			{
-				show_message_window = true;
-				message_window(msg_type::ERROR_MSG);
-			}
-			else
-			{
-				if (ImGui::MenuItem("About game")) {}
-				if (ImGui::MenuItem("About author")) {}
-			}
+			if (ImGui::MenuItem("About game")) { show_info_window = true; show_setting_window = false; }
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
@@ -157,8 +153,23 @@ void gui::main_window()
 	}
 	ImGui::End();
 
+	if (show_message_window)
+		message_window(gui::msg_type::STATE_MSG);
+
+	if (show_info_window)
+		info_window();
+
+	if (show_setting_window)
+		setting_window();
+
 	if (show_new_game_window)
+	{
+		//mciSendString("stop C:\\Users\\w0resT\\Desktop\\1.mp3", NULL, 0, NULL);
+		//mciSendString("close C:\\Users\\w0resT\\Desktop\\1.mp3", NULL, 0, NULL);
 		game_window();
+	}
+
+	onc = false;
 
 	// Rendering
 	ImGui::EndFrame();
@@ -188,17 +199,31 @@ void gui::game_window()
 	static bool can_play = true;
 	static bool move_did = false;
 
+	// TODO: Make global window_flags
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar;
 
 	ImGui::SetNextWindowPos(ImVec2(0, 19));
 	ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH - 16, WINDOW_HEIGHT - 58));
 
+	
+	if (!onc)
+	{
+		mciSendString("stop C:\\Users\\w0resT\\Desktop\\1.mp3", NULL, 0, NULL);
+		mciSendString("close C:\\Users\\w0resT\\Desktop\\1.mp3", NULL, 0, NULL);
+		onc = true;
+	}
+
+	// TODO: Make func CalculateScore for this
 	if (move_did)
 	{
 		core::best_score_h = core::evaluation(core::headtail.second, 0, 0);
 		core::best_score_t = core::evaluation(core::headtail.first, 0, 1);
 		move_did = false;
+		mciSendString("stop C:\\Users\\w0resT\\Desktop\\2.mp3", NULL, 0, NULL);
+		mciSendString("close C:\\Users\\w0resT\\Desktop\\2.mp3", NULL, 0, NULL);
 	}
+
+	mciSendString("play C:\\Users\\w0resT\\Desktop\\2.mp3 repeat", NULL, 0, NULL);
 
 	ImGui::Begin("#Game", NULL, window_flags);
 	{
@@ -316,14 +341,11 @@ void gui::game_window()
 					}
 					ImGui::EndDragDropTarget();
 				}
-
 				out_first:
 
 				ImGui::PopID();
 			}
-			ImGui::PopStyleColor();
-			ImGui::PopStyleColor();
-			ImGui::PopStyleColor();
+			ImGui::PopStyleColor(3);
 			
 			// TODO: Make ColorPicker for it
 			// Drawing lines
@@ -354,20 +376,29 @@ void gui::game_window()
 				ImGui::Text("Tail score: %d", core::best_score_t);
 			}
 
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.549f, 0.078f, 0.f, 1.f));
 			if (!core::message.empty())
-				ImGui::TextColored(ImColor(140, 20, 0), "%s", core::message.c_str());
+				ImGui::TextWrapped("%s", core::message.c_str());
+			ImGui::PopStyleColor();
 
 			ImGui::Separator();
 			ImGui::Text("Game");
 			ImGui::Separator();
-			if (ImGui::Button("Reset")) { core::reset_data(); can_play = true; }
-			if (ImGui::Button("Back to menu")) { show_new_game_window = false; core::reset_data(); }
+			if (ImGui::Button("Reset", ImVec2(-1, 20))) 
+			{ 
+				core::reset_data(); can_play = true; 
+				mciSendString("stop C:\\Users\\w0resT\\Desktop\\2.mp3", NULL, 0, NULL);
+				mciSendString("close C:\\Users\\w0resT\\Desktop\\2.mp3", NULL, 0, NULL);
+			}
+			if (ImGui::Button("Back to menu", ImVec2(-1, 20))) 
+			{ 
+				show_new_game_window = false; core::reset_data(); 
+				mciSendString("stop C:\\Users\\w0resT\\Desktop\\2.mp3", NULL, 0, NULL);
+				mciSendString("close C:\\Users\\w0resT\\Desktop\\2.mp3", NULL, 0, NULL);
+			}
 
 		}
 		ImGui::EndChild();
-
-		if (show_message_window)
-			message_window( gui::msg_type::STATE_MSG );
 	}
 	ImGui::End();
 }
@@ -406,6 +437,78 @@ void gui::message_window(msg_type msg_type)
 	ImGui::End();
 	ImGui::PopStyleColor();
 }
+
+void gui::info_window()
+{
+	std::string msg = "Two people play, taking horizontal or vertical 'unit' segments in turn. It is required that the resulting trajectory of the game be continuous, but you can attach a new segment to an existing polyline from either end. The one who is forced to close the trajectory under his own power loses.";
+
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar;
+
+	ImGui::SetNextWindowPos(ImVec2(0, 19));
+	ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH - 16, WINDOW_HEIGHT - 58));
+	ImGui::Begin("#Info", NULL, window_flags);
+	{
+		ImGui::Text("Rules:");
+		ImGui::Separator();
+		ImGui::BeginChild("#ChildInfo", ImVec2(-1, 90), true);
+		{
+			ImGui::TextWrapped("%s", msg.c_str());
+		}
+		ImGui::EndChild();
+		if (ImGui::Button("Back", ImVec2(0, 0)))
+			show_info_window = false;
+	}
+	ImGui::End();
+}
+
+void gui::setting_window()
+{
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar;
+
+	ImGui::SetNextWindowPos(ImVec2(0, 19));
+	ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH - 16, WINDOW_HEIGHT - 58));
+	ImGui::Begin("#Info", NULL, window_flags);
+	{
+		ImGui::Text("Settings:");
+		ImGui::Separator();
+		ImGui::BeginChild("#ChildSettings", ImVec2(-1, 90), true);
+		{
+			
+		}
+		ImGui::EndChild();
+
+		if (ImGui::Button("Back", ImVec2(0, 0)))
+			show_setting_window = false;
+	}
+	ImGui::End();
+}
+
+std::string gui::get_way_by_idx(int idx)
+{
+	std::string str;
+
+	switch (idx)
+	{
+	case 1:
+		str = "Up";
+		break;
+	case 2:
+		str = "Down";
+		break;
+	case 3:
+		str = "Right";
+		break;
+	case 4:
+		str = "Left";
+		break;
+	default:
+		str = "None";
+		break;
+	}
+
+	return str;
+}
+
 
 void gui::load_style()
 {
@@ -468,30 +571,4 @@ void gui::load_style()
 	colors[ImGuiCol_TextSelectedBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.19f);
 	colors[ImGuiCol_ModalWindowDarkening] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
 	colors[ImGuiCol_DragDropTarget] = ImVec4(0.00f, 0.00f, 0.00f, 0.19f);
-}
-
-std::string gui::get_way_by_idx(int idx)
-{
-	std::string str;
-
-	switch (idx)
-	{
-	case 1:
-		str = "Up";
-		break;
-	case 2:
-		str = "Down";
-		break;
-	case 3:
-		str = "Right";
-		break;
-	case 4:
-		str = "Left";
-		break;
-	default:
-		str = "None";
-		break;
-	}
-
-	return str;
 }

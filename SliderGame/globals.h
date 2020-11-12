@@ -16,6 +16,8 @@
 #define WINDOW_HEIGHT 300
 #define DIRECTINPUT_VERSION 0x0800
 
+#define max(a,b) (((a) > (b)) ? (a) : (b))
+
 namespace globals
 {
 	extern LPDIRECT3D9 d3d;

@@ -16,6 +16,8 @@ namespace gui
 	extern void main_window();
 	extern void game_window();
 	extern void message_window(msg_type msg_type);
+	extern void info_window();
+	extern void setting_window();
 
 	extern void load_style();
 	extern std::string get_way_by_idx(int idx);
@@ -25,4 +27,8 @@ namespace gui
 
 	extern bool show_new_game_window;
 	extern bool show_message_window;
+	extern bool show_info_window;
+	extern bool show_setting_window;
+
+	extern float color_first_pl[4];
 }

@@ -123,6 +123,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="core\core.cpp" />
+    <ClCompile Include="core\settings.cpp" />
     <ClCompile Include="globals.cpp" />
     <ClCompile Include="gui\gui.cpp" />
     <ClCompile Include="helpers\helpers.cpp" />
@@ -135,6 +136,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core\core.h" />
+    <ClInclude Include="core\settings.h" />
     <ClInclude Include="globals.h" />
     <ClInclude Include="gui\gui.h" />
     <ClInclude Include="helpers\helpers.h" />
