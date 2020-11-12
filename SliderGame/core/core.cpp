@@ -132,6 +132,7 @@ bool core::check_state(int idx1, int idx2)
 	return true;
 }
 
+// TODO: Make it throught lamba-func
 int evaluation_temp(int curr_idx, int level, int prev_idx)
 {
 	int curr_level = level;

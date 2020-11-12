@@ -351,10 +351,10 @@ void gui::game_window()
 
 			if (can_play)
 			{
-				ImGui::Text("W | H: %d", core::best_way_h);
-				ImGui::Text("W | T: %d", core::best_way_t);
-				ImGui::Text("S | H: %d", core::best_score_h);
-				ImGui::Text("S | T: %d", core::best_score_t);
+				ImGui::Text("Head: %s", get_way_by_idx(core::best_way_h).c_str());
+				ImGui::Text("Tail: %s", get_way_by_idx(core::best_way_t).c_str());
+				ImGui::Text("Head score: %d", core::best_score_h);
+				ImGui::Text("Tail score: %d", core::best_score_t);
 			}
 
 			if (!core::message.empty())
@@ -471,4 +471,30 @@ void gui::load_style()
 	colors[ImGuiCol_TextSelectedBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.19f);
 	colors[ImGuiCol_ModalWindowDarkening] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
 	colors[ImGuiCol_DragDropTarget] = ImVec4(0.00f, 0.00f, 0.00f, 0.19f);
+}
+
+std::string gui::get_way_by_idx(int idx)
+{
+	std::string str;
+
+	switch (idx)
+	{
+	case 1:
+		str = "Up";
+		break;
+	case 2:
+		str = "Down";
+		break;
+	case 3:
+		str = "Right";
+		break;
+	case 4:
+		str = "Left";
+		break;
+	default:
+		str = "None";
+		break;
+	}
+
+	return str;
 }

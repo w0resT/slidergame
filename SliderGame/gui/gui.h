@@ -18,6 +18,7 @@ namespace gui
 	extern void message_window(msg_type msg_type);
 
 	extern void load_style();
+	extern std::string get_way_by_idx(int idx);
 
 	extern LPCTSTR lpz_class;
 	extern HWND hwnd;
