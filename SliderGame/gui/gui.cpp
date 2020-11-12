@@ -298,10 +298,7 @@ void gui::game_window()
 							core::map_dot[payload_n] = true;
 
 							if (can_play)
-							{
 								core::player = !core::player;
-								
-							}
 
 							std::pair<ImVec2, ImVec2> temp;
 							temp.first = core::map_dot_pos[payload_n];
@@ -313,7 +310,7 @@ void gui::game_window()
 							temp_2.second = n;
 							core::made_moves_idx.push_back(temp_2);
 
-							core::made_moves_player.push_back(core::player);
+							core::made_moves_player.push_back(can_play == true ? core::player : !core::player);
 						}
 						
 					}

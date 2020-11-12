@@ -101,7 +101,7 @@ bool core::is_possible_move(int idx1, int idx2, int _type)
 
 		// Назад ходить нельзя
 		if (!made_moves_idx.empty() 
-			&& !(idx2 == headtail.first && idx1 == headtail.second)
+			&& !(idx2 == headtail.first && idx1 == headtail.second && made_moves_idx.size() != 1)
 			&& (idx2 == made_moves_idx.back().first || idx2 == made_moves_idx.back().second))
 		{
 			message.append("You can't \nmove back!");
