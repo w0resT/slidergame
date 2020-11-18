@@ -20,6 +20,9 @@ namespace core
 	bool pc_map_dot[25];
 }
 
+// TODO: MAKE PLEASE ENG COMMENTS!1
+// AND DO IT IN SOME CLASS!!11
+
 void core::reset_data()
 {
 	for (int i = 0; i < 25; ++i)

@@ -2,9 +2,6 @@
 #include "../helpers/helpers.h"
 #include "../core/core.h"
 
-#include <windows.h>
-#pragma comment(lib, "winmm.lib")
-
 namespace gui
 {
 	LPCTSTR lpz_class = nullptr;
@@ -13,8 +10,12 @@ namespace gui
 	bool show_message_window = false;
 	bool show_info_window = false;
 	bool show_setting_window = false;
-	float color_first_pl[4] = { 0.f, 0.f, 0.f, 1.f };
+	float color_first_pl[3] = { 0.314f, 0.51f, 0.f };
+	float color_second_pl[3] = { 0.f, 0.51f, 1.f };
 }
+
+// TODO: MAKE ALL THIS SHIT IN A CLASS PLEASE
+// STOP FCKING SHIT-CODING ASSHOLE BITCH
 
 bool gui::setup_window(HINSTANCE m_hInstance)
 {
@@ -88,8 +89,6 @@ void gui::main()
 	}
 }
 
-static bool onc = false;
-
 void gui::main_window()
 {
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -98,11 +97,6 @@ void gui::main_window()
 	ImGui_ImplDX9_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
-
-	//mciSendString("stop C:\\Users\\w0resT\\Desktop\\2.mp3", NULL, 0, NULL);
-	//mciSendString("close C:\\Users\\w0resT\\Desktop\\2.mp3", NULL, 0, NULL);
-
-	mciSendString("play C:\\Users\\w0resT\\Desktop\\1.mp3 repeat", NULL, 0, NULL);
 
 	// Bar menu
 	if (ImGui::BeginMainMenuBar())
@@ -163,13 +157,7 @@ void gui::main_window()
 		setting_window();
 
 	if (show_new_game_window)
-	{
-		//mciSendString("stop C:\\Users\\w0resT\\Desktop\\1.mp3", NULL, 0, NULL);
-		//mciSendString("close C:\\Users\\w0resT\\Desktop\\1.mp3", NULL, 0, NULL);
 		game_window();
-	}
-
-	onc = false;
 
 	// Rendering
 	ImGui::EndFrame();
@@ -196,7 +184,7 @@ void gui::main_window()
 
 void gui::game_window()
 {
-	static bool can_play = true;
+	static bool can_play = true; // MAKE IT GLOBAL IN CORE CLASS CUZ IF GAME FINISHED THEN CAN'T CREATE NEW GAME WITH SUBMENU
 	static bool move_did = false;
 
 	// TODO: Make global window_flags
@@ -205,28 +193,17 @@ void gui::game_window()
 	ImGui::SetNextWindowPos(ImVec2(0, 19));
 	ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH - 16, WINDOW_HEIGHT - 58));
 
-	
-	if (!onc)
-	{
-		mciSendString("stop C:\\Users\\w0resT\\Desktop\\1.mp3", NULL, 0, NULL);
-		mciSendString("close C:\\Users\\w0resT\\Desktop\\1.mp3", NULL, 0, NULL);
-		onc = true;
-	}
-
 	// TODO: Make func CalculateScore for this
 	if (move_did)
 	{
 		core::best_score_h = core::evaluation(core::headtail.second, 0, 0);
 		core::best_score_t = core::evaluation(core::headtail.first, 0, 1);
 		move_did = false;
-		mciSendString("stop C:\\Users\\w0resT\\Desktop\\2.mp3", NULL, 0, NULL);
-		mciSendString("close C:\\Users\\w0resT\\Desktop\\2.mp3", NULL, 0, NULL);
 	}
-
-	mciSendString("play C:\\Users\\w0resT\\Desktop\\2.mp3 repeat", NULL, 0, NULL);
 
 	ImGui::Begin("#Game", NULL, window_flags);
 	{
+		// TODO: Make it outside of imgui::begin
 		static bool once = false;
 		if (!once)
 		{
@@ -352,7 +329,9 @@ void gui::game_window()
 			int k = 0;
 			for (auto foo : core::made_moves)
 			{
-				draw_list->AddLine(foo.first, foo.second, core::made_moves_player[k] ? ImColor(80, 130, 0) : ImColor(0, 130, 255), 2.f);
+				draw_list->AddLine(foo.first, foo.second, core::made_moves_player[k] 
+					? ImColor(color_first_pl[0], color_first_pl[1], color_first_pl[2]) 
+					: ImColor(color_second_pl[0], color_second_pl[1], color_second_pl[2]), 2.f);
 				k++;
 			}
 		}
@@ -387,14 +366,10 @@ void gui::game_window()
 			if (ImGui::Button("Reset", ImVec2(-1, 20))) 
 			{ 
 				core::reset_data(); can_play = true; 
-				mciSendString("stop C:\\Users\\w0resT\\Desktop\\2.mp3", NULL, 0, NULL);
-				mciSendString("close C:\\Users\\w0resT\\Desktop\\2.mp3", NULL, 0, NULL);
 			}
 			if (ImGui::Button("Back to menu", ImVec2(-1, 20))) 
 			{ 
-				show_new_game_window = false; core::reset_data(); 
-				mciSendString("stop C:\\Users\\w0resT\\Desktop\\2.mp3", NULL, 0, NULL);
-				mciSendString("close C:\\Users\\w0resT\\Desktop\\2.mp3", NULL, 0, NULL);
+				show_new_game_window = false; core::reset_data(); can_play = true;
 			}
 
 		}
@@ -473,7 +448,9 @@ void gui::setting_window()
 		ImGui::Separator();
 		ImGui::BeginChild("#ChildSettings", ImVec2(-1, 90), true);
 		{
-			
+			//color_first_pl; color_second_pl
+			ImGui::ColorEdit3("1 player color", color_first_pl);
+			ImGui::ColorEdit3("2 player color", color_second_pl);
 		}
 		ImGui::EndChild();
 
@@ -508,7 +485,6 @@ std::string gui::get_way_by_idx(int idx)
 
 	return str;
 }
-
 
 void gui::load_style()
 {

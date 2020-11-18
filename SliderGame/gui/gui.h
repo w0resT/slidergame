@@ -30,5 +30,6 @@ namespace gui
 	extern bool show_info_window;
 	extern bool show_setting_window;
 
-	extern float color_first_pl[4];
+	extern float color_first_pl[3];
+	extern float color_second_pl[3];
 }
