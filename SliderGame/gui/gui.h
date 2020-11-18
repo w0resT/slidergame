@@ -1,5 +1,6 @@
 #pragma once
 #include "../globals.h"
+#include "../core/core.h"
 
 namespace gui
 {
@@ -13,9 +14,9 @@ namespace gui
 	extern void release_window(HINSTANCE m_hInstance);
 	extern void main();
 
-	extern void main_window();
-	extern void game_window();
-	extern void message_window(msg_type msg_type);
+	extern void main_window(c_core &game);
+	extern void game_window(c_core &game);
+	extern void message_window(c_core &game, msg_type msg_type);
 	extern void info_window();
 	extern void setting_window();
 
@@ -30,6 +31,5 @@ namespace gui
 	extern bool show_info_window;
 	extern bool show_setting_window;
 
-	extern float color_first_pl[3];
-	extern float color_second_pl[3];
+	extern ImGuiWindowFlags window_flags;
 }

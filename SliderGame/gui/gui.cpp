@@ -1,6 +1,6 @@
 #include "gui.h"
 #include "../helpers/helpers.h"
-#include "../core/core.h"
+#include "../core/settings.h"
 
 namespace gui
 {
@@ -10,12 +10,8 @@ namespace gui
 	bool show_message_window = false;
 	bool show_info_window = false;
 	bool show_setting_window = false;
-	float color_first_pl[3] = { 0.314f, 0.51f, 0.f };
-	float color_second_pl[3] = { 0.f, 0.51f, 1.f };
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar;
 }
-
-// TODO: MAKE ALL THIS SHIT IN A CLASS PLEASE
-// STOP FCKING SHIT-CODING ASSHOLE BITCH
 
 bool gui::setup_window(HINSTANCE m_hInstance)
 {
@@ -69,6 +65,9 @@ void gui::release_window(HINSTANCE m_hInstance)
 
 void gui::main()
 {
+	// Current game
+	c_core game;
+
 	// Main loop
 	MSG msg;
 	ZeroMemory(&msg, sizeof(msg));
@@ -85,11 +84,11 @@ void gui::main()
 		if (globals::exit)
 			break;
 
-		gui::main_window();
+		gui::main_window(game);
 	}
 }
 
-void gui::main_window()
+void gui::main_window(c_core &game)
 {
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
@@ -103,52 +102,71 @@ void gui::main_window()
 	{
 		if (ImGui::BeginMenu("Game"))
 		{
-			if (ImGui::MenuItem("New game")) { show_new_game_window = true; core::reset_data(); }
-			if (show_new_game_window) if (ImGui::MenuItem("Back to menu")) { show_new_game_window = false; core::reset_data(); }
-			if (ImGui::MenuItem("Exit")) { globals::exit = true; }
+			if (ImGui::MenuItem("New game")) 
+			{ 
+				show_new_game_window = true; 
+				game.reset_data();
+				game.set_game_active(true);
+			}
+
+			if (show_new_game_window)
+			{
+				if (ImGui::MenuItem("Back to menu"))
+				{
+					show_new_game_window = false;
+					game.reset_data();
+				}
+			}
+
+			if (ImGui::MenuItem("Exit")) 
+				globals::exit = true;
+
 			ImGui::EndMenu();
 		}
 
 		if (ImGui::BeginMenu("Settings"))
 		{
-			if (ImGui::MenuItem("Style settings")) { show_setting_window = true; show_info_window = false; }
+			if (ImGui::MenuItem("Style settings")) 
+			{ 
+				show_setting_window = true; 
+				show_info_window = false; 
+			}
+
 			ImGui::EndMenu();
 		}
 
 		if (ImGui::BeginMenu("Info"))
 		{
-			if (ImGui::MenuItem("About game")) { show_info_window = true; show_setting_window = false; }
+			if (ImGui::MenuItem("About game")) 
+			{ 
+				show_info_window = true; 
+				show_setting_window = false; 
+			}
+
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
 	}
 
-	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar;
-
 	ImGui::SetNextWindowPos(ImVec2(0, 19));
 	ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH - 16, WINDOW_HEIGHT - 58));
-
-	ImGui::Begin("#Main", NULL, window_flags);
+	ImGui::Begin("#Main", NULL, gui::window_flags);
 	{
 		float x = ImGui::GetWindowWidth() / 2 - 90.f;
 		float y = ImGui::GetWindowHeight() / 2 - 50.f;
 
 		ImGui::SetCursorPos(ImVec2(x, y));
 		if (ImGui::Button("New game", ImVec2(180, 40)))
-		{
 			show_new_game_window = true;
-		}
 
 		ImGui::SetCursorPosX(x);
 		if (ImGui::Button("Exit", ImVec2(180, 40)))
-		{
 			globals::exit = true;
-		}
 	}
 	ImGui::End();
 
 	if (show_message_window)
-		message_window(gui::msg_type::STATE_MSG);
+		message_window(game, gui::msg_type::STATE_MSG);
 
 	if (show_info_window)
 		info_window();
@@ -157,7 +175,7 @@ void gui::main_window()
 		setting_window();
 
 	if (show_new_game_window)
-		game_window();
+		game_window(game);
 
 	// Rendering
 	ImGui::EndFrame();
@@ -182,35 +200,15 @@ void gui::main_window()
 		helpers::reset_device();
 }
 
-void gui::game_window()
+void gui::game_window(c_core &game)
 {
-	static bool can_play = true; // MAKE IT GLOBAL IN CORE CLASS CUZ IF GAME FINISHED THEN CAN'T CREATE NEW GAME WITH SUBMENU
-	static bool move_did = false;
-
-	// TODO: Make global window_flags
-	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar;
+	// Current game session
+	auto curr = game.get_current_session();
 
 	ImGui::SetNextWindowPos(ImVec2(0, 19));
 	ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH - 16, WINDOW_HEIGHT - 58));
-
-	// TODO: Make func CalculateScore for this
-	if (move_did)
+	ImGui::Begin("#Game", NULL, gui::window_flags);
 	{
-		core::best_score_h = core::evaluation(core::headtail.second, 0, 0);
-		core::best_score_t = core::evaluation(core::headtail.first, 0, 1);
-		move_did = false;
-	}
-
-	ImGui::Begin("#Game", NULL, window_flags);
-	{
-		// TODO: Make it outside of imgui::begin
-		static bool once = false;
-		if (!once)
-		{
-			core::reset_data();
-			once = true;
-		}
-		
 		ImGui::Columns(1);
 		ImGui::BeginChild("#ChildGame", ImVec2(236, 0), true);
 		{
@@ -240,13 +238,13 @@ void gui::game_window()
 				if (n == 25)
 					ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 29.f);
 
-				core::map_dot_pos[n] = ImGui::GetCursorPos();
-				core::map_dot_pos[n].x += 18.0f;
-				core::map_dot_pos[n].y += 31.f;
+				curr->map_dot_pos[n] = ImGui::GetCursorPos();
+				curr->map_dot_pos[n].x += 18.0f;
+				curr->map_dot_pos[n].y += 31.f;
 
-				ImGui::RadioButton("", core::map_dot[n]);
+				ImGui::RadioButton("", curr->map_dot[n]);
 
-				if (!can_play)
+				if (!game.get_game_active())
 					goto out_first;
 
 				// It is Human. We need do same for PC
@@ -263,57 +261,7 @@ void gui::game_window()
 						IM_ASSERT(payload->DataSize == sizeof(int));
 						int payload_n = *(const int*)payload->Data;
 
-						static bool first_ = false;
-
-						if(!core::message.empty())
-							core::message.clear();
-
-						if (core::headtail.first == -1)
-						{
-							core::headtail.first = payload_n;
-							core::headtail.second = n;
-							first_ = true;
-						}
-
-						if (core::is_possible_move(payload_n, n))
-						{
-							if (!core::check_state(payload_n, n))
-							{
-								core::message.append("You lose.");
-								show_message_window = true;
-								can_play = false;
-							}
-
-							if (!first_)
-							{
-								if (payload_n == core::headtail.first)
-									core::headtail.first = n;
-
-								if (payload_n == core::headtail.second)
-									core::headtail.second = n;
-							}
-
-							first_ = false;
-							move_did = true;
-
-							core::map_dot[n] = true;
-							core::map_dot[payload_n] = true;
-
-							if (can_play)
-								core::player = !core::player;
-
-							std::pair<ImVec2, ImVec2> temp;
-							temp.first = core::map_dot_pos[payload_n];
-							temp.second = core::map_dot_pos[n];
-							core::made_moves.push_back(temp);
-
-							std::pair<int, int> temp_2;
-							temp_2.first = payload_n;
-							temp_2.second = n;
-							core::made_moves_idx.push_back(temp_2);
-
-							core::made_moves_player.push_back(can_play == true ? core::player : !core::player);
-						}
+						game.on_move(n, payload_n);
 						
 					}
 					ImGui::EndDragDropTarget();
@@ -324,14 +272,13 @@ void gui::game_window()
 			}
 			ImGui::PopStyleColor(3);
 			
-			// TODO: Make ColorPicker for it
 			// Drawing lines
 			int k = 0;
-			for (auto foo : core::made_moves)
+			for (auto foo : curr->made_moves)
 			{
-				draw_list->AddLine(foo.first, foo.second, core::made_moves_player[k] 
-					? ImColor(color_first_pl[0], color_first_pl[1], color_first_pl[2]) 
-					: ImColor(color_second_pl[0], color_second_pl[1], color_second_pl[2]), 2.f);
+				draw_list->AddLine(foo.first, foo.second, curr->made_moves_player[k]
+					? ImColor(g_settings.gui.color_first_pl[0], g_settings.gui.color_first_pl[1], g_settings.gui.color_first_pl[2])
+					: ImColor(g_settings.gui.color_second_pl[0], g_settings.gui.color_second_pl[1], g_settings.gui.color_second_pl[2]), 2.f);
 				k++;
 			}
 		}
@@ -345,19 +292,19 @@ void gui::game_window()
 			ImGui::Separator();
 
 			ImGui::Text("Move:");
-			ImGui::TextColored(ImColor(70, 150, 170), core::player ? "Second player" : "First player");
+			ImGui::TextColored(ImColor(70, 150, 170), curr->player ? "Second player" : "First player");
 
-			if (can_play)
+			if (game.get_game_active())
 			{
-				ImGui::Text("Head: %s", get_way_by_idx(core::best_way_h).c_str());
-				ImGui::Text("Tail: %s", get_way_by_idx(core::best_way_t).c_str());
-				ImGui::Text("Head score: %d", core::best_score_h);
-				ImGui::Text("Tail score: %d", core::best_score_t);
+				ImGui::Text("Head: %s", get_way_by_idx(curr->best_way_h).c_str());
+				ImGui::Text("Tail: %s", get_way_by_idx(curr->best_way_t).c_str());
+				ImGui::Text("Head score: %d", curr->best_score_h);
+				ImGui::Text("Tail score: %d", curr->best_score_t);
 			}
 
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.549f, 0.078f, 0.f, 1.f));
-			if (!core::message.empty())
-				ImGui::TextWrapped("%s", core::message.c_str());
+			if (!curr->message.empty())
+				ImGui::TextWrapped("%s", curr->message.c_str());
 			ImGui::PopStyleColor();
 
 			ImGui::Separator();
@@ -365,11 +312,15 @@ void gui::game_window()
 			ImGui::Separator();
 			if (ImGui::Button("Reset", ImVec2(-1, 20))) 
 			{ 
-				core::reset_data(); can_play = true; 
+				game.reset_data();
+				game.set_game_active(true);
 			}
+
 			if (ImGui::Button("Back to menu", ImVec2(-1, 20))) 
 			{ 
-				show_new_game_window = false; core::reset_data(); can_play = true;
+				show_new_game_window = false; 
+				game.reset_data(); 
+				game.set_game_active(true);
 			}
 
 		}
@@ -378,17 +329,15 @@ void gui::game_window()
 	ImGui::End();
 }
 
-// TODO: FIXIT: We can click out of this window
-void gui::message_window(msg_type msg_type)
+// TODO: FIXME: We can click out of this window
+void gui::message_window(c_core &game, msg_type msg_type)
 {
-	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar;
-
 	std::string msg;
 	
 	switch (msg_type)
 	{
 	case gui::STATE_MSG:
-		msg = core::player ? "Second " : "First ";
+		msg = game.get_current_session()->player ? "Second " : "First ";
 		msg.append("player lose!");
 		break;
 	case gui::ERROR_MSG:
@@ -401,9 +350,8 @@ void gui::message_window(msg_type msg_type)
 	
 	ImGui::SetNextWindowPos(ImVec2(100, 100));
 	ImGui::SetNextWindowSize(ImVec2(146, 50));
-
 	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.85f, 0.85f, 0.85f, 1.00f));
-	ImGui::Begin("#Message", NULL, window_flags);
+	ImGui::Begin("#Message", NULL, gui::window_flags);
 	{
 		ImGui::Text("%s", msg.c_str());
 		if (ImGui::Button("Back", ImVec2(-1, -1)))
@@ -415,13 +363,11 @@ void gui::message_window(msg_type msg_type)
 
 void gui::info_window()
 {
-	std::string msg = "Two people play, taking horizontal or vertical 'unit' segments in turn. It is required that the resulting trajectory of the game be continuous, but you can attach a new segment to an existing polyline from either end. The one who is forced to close the trajectory under his own power loses.";
-
-	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar;
+	static std::string msg = "Two people play, taking horizontal or vertical 'unit' segments in turn. It is required that the resulting trajectory of the game be continuous, but you can attach a new segment to an existing polyline from either end. The one who is forced to close the trajectory under his own power loses.";
 
 	ImGui::SetNextWindowPos(ImVec2(0, 19));
 	ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH - 16, WINDOW_HEIGHT - 58));
-	ImGui::Begin("#Info", NULL, window_flags);
+	ImGui::Begin("#Info", NULL, gui::window_flags);
 	{
 		ImGui::Text("Rules:");
 		ImGui::Separator();
@@ -430,6 +376,7 @@ void gui::info_window()
 			ImGui::TextWrapped("%s", msg.c_str());
 		}
 		ImGui::EndChild();
+
 		if (ImGui::Button("Back", ImVec2(0, 0)))
 			show_info_window = false;
 	}
@@ -438,19 +385,19 @@ void gui::info_window()
 
 void gui::setting_window()
 {
-	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar;
-
 	ImGui::SetNextWindowPos(ImVec2(0, 19));
 	ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH - 16, WINDOW_HEIGHT - 58));
-	ImGui::Begin("#Info", NULL, window_flags);
+	ImGui::Begin("#Info", NULL, gui::window_flags);
 	{
 		ImGui::Text("Settings:");
 		ImGui::Separator();
 		ImGui::BeginChild("#ChildSettings", ImVec2(-1, 90), true);
 		{
-			//color_first_pl; color_second_pl
-			ImGui::ColorEdit3("1 player color", color_first_pl);
-			ImGui::ColorEdit3("2 player color", color_second_pl);
+			ImGui::ColorEdit3("1 player color", g_settings.gui.color_first_pl);
+			ImGui::ColorEdit3("2 player color", g_settings.gui.color_second_pl);
+
+			if (ImGui::Button("Reset to default", ImVec2(0, 0)))
+				g_settings.default_settings();
 		}
 		ImGui::EndChild();
 
@@ -488,8 +435,6 @@ std::string gui::get_way_by_idx(int idx)
 
 void gui::load_style()
 {
-	ImGui::StyleColorsDark();
-
 	ImGuiStyle& style = ImGui::GetStyle();
 
 	style.WindowRounding = 0.f;
@@ -506,7 +451,7 @@ void gui::load_style()
 
 	ImGui::GetStyle() = style;
 
-	ImVec4* colors = ImGui::GetStyle().Colors;
+	ImVec4* colors = style.Colors;
 	colors[ImGuiCol_Text] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
 	colors[ImGuiCol_TextDisabled] = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
 	colors[ImGuiCol_WindowBg] = ImVec4(0.94f, 0.94f, 0.94f, 1.00f);

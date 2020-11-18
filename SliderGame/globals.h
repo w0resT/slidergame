@@ -1,7 +1,6 @@
 #pragma once
-
 #include <d3d9.h>
-#include <utility> // std::pair
+#include <utility>
 #include <vector>
 #include <string>
 
@@ -15,8 +14,6 @@
 #define WINDOW_WIDTH 400
 #define WINDOW_HEIGHT 300
 #define DIRECTINPUT_VERSION 0x0800
-
-#define max(a,b) (((a) > (b)) ? (a) : (b))
 
 namespace globals
 {
