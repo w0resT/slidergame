@@ -172,7 +172,10 @@ void gui::main_window(c_core &game)
 		info_window();
 
 	if (show_setting_window)
+	{
+		game.reset_data();
 		setting_window();
+	}
 
 	if (show_new_game_window)
 		game_window(game);
@@ -204,6 +207,8 @@ void gui::game_window(c_core &game)
 {
 	// Current game session
 	auto curr = game.get_current_session();
+	if (!curr)
+		return;
 
 	ImGui::SetNextWindowPos(ImVec2(0, 19));
 	ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH - 16, WINDOW_HEIGHT - 58));
@@ -238,16 +243,28 @@ void gui::game_window(c_core &game)
 				if (n == 25)
 					ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 29.f);
 
+				// Fill in the coordinates of all points on the field
 				curr->map_dot_pos[n] = ImGui::GetCursorPos();
 				curr->map_dot_pos[n].x += 18.0f;
 				curr->map_dot_pos[n].y += 31.f;
 
 				ImGui::RadioButton("", curr->map_dot[n]);
 
+				// The game is not active therefore we skip the event turn
 				if (!game.get_game_active())
 					goto out_first;
 
-				// It is Human. We need do same for PC
+
+				// game_mode = 1 - Play VS PC
+				// player = true - second player, play = false - first player
+				if (g_settings.game.game_mode == 1 && curr->player)
+				{
+					game.run_bot();
+
+					// Go ahead, the bot made a move
+					goto out_first;
+				}
+
 				if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
 				{
 					ImGui::SetDragDropPayload("DND_GAME_CELL", &n, sizeof(int));
@@ -261,8 +278,7 @@ void gui::game_window(c_core &game)
 						IM_ASSERT(payload->DataSize == sizeof(int));
 						int payload_n = *(const int*)payload->Data;
 
-						game.on_move(n, payload_n);
-						
+						game.on_move(n, payload_n);		
 					}
 					ImGui::EndDragDropTarget();
 				}
@@ -294,13 +310,15 @@ void gui::game_window(c_core &game)
 			ImGui::Text("Move:");
 			ImGui::TextColored(ImColor(70, 150, 170), curr->player ? "Second player" : "First player");
 
-			if (game.get_game_active())
+			ImGui::Text(game.get_game_active() == true ? "Game active" : "Game inactive");
+			ImGui::Text("%s", get_level_by_idx(g_settings.game.difficulty_level).c_str());
+			/*if (game.get_game_active())
 			{
 				ImGui::Text("Head: %s", get_way_by_idx(curr->best_way_h).c_str());
 				ImGui::Text("Tail: %s", get_way_by_idx(curr->best_way_t).c_str());
 				ImGui::Text("Head score: %d", curr->best_score_h);
 				ImGui::Text("Tail score: %d", curr->best_score_t);
-			}
+			}*/
 
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.549f, 0.078f, 0.f, 1.f));
 			if (!curr->message.empty())
@@ -371,7 +389,7 @@ void gui::info_window()
 	{
 		ImGui::Text("Rules:");
 		ImGui::Separator();
-		ImGui::BeginChild("#ChildInfo", ImVec2(-1, 90), true);
+		ImGui::BeginChild("#ChildInfo", ImVec2(-1, 150), true);
 		{
 			ImGui::TextWrapped("%s", msg.c_str());
 		}
@@ -385,16 +403,20 @@ void gui::info_window()
 
 void gui::setting_window()
 {
+	const char* items[] = { "Easy", "Normal", "Hard" };
+
 	ImGui::SetNextWindowPos(ImVec2(0, 19));
 	ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH - 16, WINDOW_HEIGHT - 58));
-	ImGui::Begin("#Info", NULL, gui::window_flags);
+	ImGui::Begin("#Settings", NULL, gui::window_flags);
 	{
 		ImGui::Text("Settings:");
 		ImGui::Separator();
-		ImGui::BeginChild("#ChildSettings", ImVec2(-1, 90), true);
+		ImGui::BeginChild("#ChildSettings", ImVec2(-1, 150), true);
 		{
 			ImGui::ColorEdit3("1 player color", g_settings.gui.color_first_pl);
 			ImGui::ColorEdit3("2 player color", g_settings.gui.color_second_pl);
+			ImGui::Checkbox("Play vs PC", &g_settings.game.game_mode);
+			ImGui::ListBox("Difficulty level", &g_settings.game.difficulty_level, items, IM_ARRAYSIZE(items), 3);
 
 			if (ImGui::Button("Reset to default", ImVec2(0, 0)))
 				g_settings.default_settings();
@@ -424,6 +446,29 @@ std::string gui::get_way_by_idx(int idx)
 		break;
 	case 4:
 		str = "Left";
+		break;
+	default:
+		str = "None";
+		break;
+	}
+
+	return str;
+}
+
+std::string gui::get_level_by_idx(int idx)
+{
+	std::string str;
+
+	switch (idx)
+	{
+	case 0:
+		str = "Easy";
+		break;
+	case 1:
+		str = "Normal";
+		break;
+	case 2:
+		str = "Hard";
 		break;
 	default:
 		str = "None";

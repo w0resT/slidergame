@@ -14,5 +14,6 @@ void c_settings::default_settings()
 	gui.color_second_pl[2] = 1.f;
 
 	// game
-	game.game_mode = 1;
+	game.game_mode = false;
+	game.difficulty_level = 1;
 }

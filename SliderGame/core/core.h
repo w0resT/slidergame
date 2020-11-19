@@ -45,6 +45,7 @@ private:
 	};
 
 	s_session *current_session;
+	s_session *temp_session[5];
 
 	bool game_active;
 
@@ -59,14 +60,19 @@ public:
 		game_active = true;
 
 		current_session = new s_session;
+		*temp_session = new s_session[5];
 	}
-	~c_core() {	delete current_session; }
+	~c_core() 
+	{	
+		//delete current_session; 
+		//delete[] temp_session;
+	}
 
 	void on_move(int n, int payload_n);
+	void run_bot();
 	void reset_data();
 	void calculate_score();
 	void set_game_active(bool _b) { game_active = _b; }
-
 	bool get_game_active() { return game_active; }
 
 	s_session *get_current_session() { return current_session; }
@@ -75,7 +81,16 @@ public:
 
 private:
 	bool is_possible_move(int _from, int _to, int _type = 0);
-	bool check_state(int _from, int _to);
-	int evaluation(int curr_idx, int level = 0, int ht = 0);
-	int evaluation_recursion(int curr_idx, int level, int prev_idx);
+	bool check_state(int _from, int _to, s_session *curr = nullptr);
+	int evaluation(int curr_idx, int level = 0, int ht = 0, s_session *curr = nullptr);
+	int evaluation_recursion(int curr_idx, int level, int prev_idx, s_session *curr);
+
+	// return number of the best way, 0 - up, 1 - down, 2 - right, 3 - left
+	int run_prediction(int _player, int level = 0, int ht = 0, int *_score = nullptr);
+	void presetup_bot(int _level); // temp_session = current_session
+	void setup_bot(s_session *curr, int _way); // doing temp moves
+	void restore_bot(); // restoring temp_session to current_session and removing all moves
+	void reset_temp_data();
+	void do_move(int _way, int ht);
+	int ambush(int curr_idx);
 };

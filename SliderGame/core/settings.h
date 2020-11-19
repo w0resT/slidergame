@@ -12,7 +12,8 @@ public:
 
 	struct s_game_settings
 	{
-		int game_mode;
+		bool game_mode; // 0 - player2play, 1 - player2PC
+		int difficulty_level;
 	};
 
 	c_settings() { default_settings(); }

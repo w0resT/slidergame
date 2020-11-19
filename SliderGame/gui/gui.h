@@ -22,6 +22,7 @@ namespace gui
 
 	extern void load_style();
 	extern std::string get_way_by_idx(int idx);
+	extern std::string get_level_by_idx(int idx);
 
 	extern LPCTSTR lpz_class;
 	extern HWND hwnd;
